@@ -61,7 +61,16 @@ public class ProductController {
 
     @DeleteMapping("{id}")
     public Mono< ? > delete(@PathVariable String id) {
-        return productRepository.findById(id).flatMap(existingProduct -> productRepository.delete(existingProduct));
+        return productRepository.findById(id)
+                .flatMap(existingProduct -> productRepository.delete(existingProduct)
+                .then(Mono.just(ResponseEntity.ok().build()))
+                ).defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping
+    public Mono< ? > deleteAll() {
+        return productRepository.deleteAll()
+                .then(Mono.just(ResponseEntity.ok().build()));
     }
 }
 
