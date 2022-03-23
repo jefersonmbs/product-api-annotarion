@@ -4,6 +4,7 @@ import com.wiredbraincoffee.productapiannotarion.model.Product;
 import com.wiredbraincoffee.productapiannotarion.repository.ProductRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,7 +19,7 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/products")
 public class ProductController {
 
-    private ProductRepository productRepository;
+    private final ProductRepository productRepository;
 
     public ProductController(ProductRepository productRepository) {
         this.productRepository = productRepository;
@@ -30,35 +31,34 @@ public class ProductController {
     }
 
     @GetMapping("{id}")
-    public Mono<Product> getProduct(@PathVariable String id) {
+    public Mono< Product > getProduct(@PathVariable String id) {
         return productRepository.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
-    public Mono<Product> save(@RequestBody Product product) {
+    public Mono< Product > save(@RequestBody Product product) {
         return productRepository.save(product);
     }
 
     @GetMapping("/search/{name}")
-    public Flux<Product> findByName(@PathVariable String name) {
+    public Flux< Product > findByName(@PathVariable String name) {
         return productRepository.findByNameContaining(name);
     }
 
     @PutMapping("{id}")
-    public Mono<?> updateProduct(@PathVariable String id, @RequestBody Product product) {
-        return productRepository.findById(id)
-                .flatMap(existingProduct -> {
-                    existingProduct.setName(StringUtils.isNotBlank(product.getName()) ? product.getName() : existingProduct.getName());
-                    existingProduct.setPrice(product.getPrice() != 0L ? product.getPrice() : existingProduct.getPrice());
-                    return productRepository.save(existingProduct);
-                });
+    public Mono< ? > updateProduct(@PathVariable String id, @RequestBody Product product) {
+        return productRepository.findById(id).flatMap(existingProduct -> {
+            existingProduct.setName(StringUtils.isNotBlank(product.getName()) ? product.getName() : existingProduct.getName());
+            existingProduct.setPrice(product.getPrice() != 0L ? product.getPrice() : existingProduct.getPrice());
+            return productRepository.save(existingProduct);
+        }).map(updatedProduct -> ResponseEntity.ok(updatedProduct))
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("{id}")
-    public Mono<Void> delete(@PathVariable String id) {
-        return productRepository.findById(id)
-                .flatMap(existingProduct -> productRepository.delete(existingProduct));
+    public Mono< Void > delete(@PathVariable String id) {
+        return productRepository.findById(id).flatMap(existingProduct -> productRepository.delete(existingProduct));
     }
 }
 
