@@ -2,10 +2,12 @@ package com.wiredbraincoffee.productapiannotarion.controller;
 
 import com.wiredbraincoffee.productapiannotarion.model.Product;
 import com.wiredbraincoffee.productapiannotarion.repository.ProductRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 
 /**
  * @author Jeferson Martins @Capgemini
@@ -44,11 +46,11 @@ public class ProductController {
     }
 
     @PutMapping("{id}")
-    public Mono<Product> updateProduct(@PathVariable String id, @RequestBody Product product) {
+    public Mono<?> updateProduct(@PathVariable String id, @RequestBody Product product) {
         return productRepository.findById(id)
                 .flatMap(existingProduct -> {
-                    existingProduct.setName(product.getName());
-                    existingProduct.setPrice(product.getPrice());
+                    existingProduct.setName(StringUtils.isNotBlank(product.getName()) ? product.getName() : existingProduct.getName());
+                    existingProduct.setPrice(product.getPrice() != 0L ? product.getPrice() : existingProduct.getPrice());
                     return productRepository.save(existingProduct);
                 });
     }
