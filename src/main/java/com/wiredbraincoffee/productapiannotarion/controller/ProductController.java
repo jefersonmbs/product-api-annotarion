@@ -31,14 +31,17 @@ public class ProductController {
     }
 
     @GetMapping("{id}")
-    public Mono< Product > getProduct(@PathVariable String id) {
-        return productRepository.findById(id);
+    public Mono< ? > getProduct(@PathVariable String id) {
+        return productRepository.findById(id).map(product -> ResponseEntity.ok(product))
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
-    public Mono< Product > save(@RequestBody Product product) {
-        return productRepository.save(product);
+    public Mono< ? > save(@RequestBody Product product) {
+        return productRepository.save(product)
+                .map(savedProduct  -> ResponseEntity.ok(savedProduct))
+                .defaultIfEmpty(ResponseEntity.internalServerError().build());
     }
 
     @GetMapping("/search/{name}")
@@ -57,7 +60,7 @@ public class ProductController {
     }
 
     @DeleteMapping("{id}")
-    public Mono< Void > delete(@PathVariable String id) {
+    public Mono< ? > delete(@PathVariable String id) {
         return productRepository.findById(id).flatMap(existingProduct -> productRepository.delete(existingProduct));
     }
 }
